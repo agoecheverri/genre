@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Étude : choisir une nouvelle chanson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1EC; --paper:#FFFFFF; --ink:#1B2230; --muted:#5D6573; --line:#D3D9D2;
+  --accent:#2F6F62; --accent-soft:#DCEAE5; --accent-ink:#FFFFFF; --warn:#A03A2B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A20; --paper:#1C242C; --ink:#E7ECEA; --muted:#A1AAB3; --line:#33404A;
+    --accent:#6FC0AC; --accent-soft:#1F3A34; --accent-ink:#0F1A17; --warn:#E88A7B;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A20; --paper:#1C242C; --ink:#E7ECEA; --muted:#A1AAB3; --line:#33404A;
+  --accent:#6FC0AC; --accent-soft:#1F3A34; --accent-ink:#0F1A17; --warn:#E88A7B;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.55}
+main{max-width:720px;margin:0 auto;padding:2rem 1.25rem 4rem}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1.75rem 1.5rem}
+h1{font-size:1.75rem;line-height:1.2;font-weight:600;margin:0 0 .75rem;letter-spacing:-.01em}
+h2{font-size:1.25rem;font-weight:600;margin:0 0 .75rem}
+p{margin:0 0 1rem;max-width:62ch}
+.muted{color:var(--muted);font-size:.93rem}
+.progress{display:flex;gap:4px;margin:0 0 1.25rem}
+.progress span{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.progress span.done{background:var(--accent)}
+.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem;margin-bottom:.5rem}
+button{font:inherit;font-weight:500;border-radius:10px;padding:.7rem 1.2rem;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible,.song:focus-visible,label.opt:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:1.5rem;flex-wrap:wrap}
+.err{color:var(--warn);font-size:.92rem;min-height:1.3em}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.song{position:relative;text-align:left;border:1.5px solid var(--line);border-radius:14px;padding:1.1rem 1.1rem 1rem;background:var(--paper);width:100%}
+.song[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.disc{width:54px;height:54px;border-radius:50%;background:var(--ink);position:relative;margin-bottom:.8rem}
+.disc::after{content:"";position:absolute;inset:19px;border-radius:50%;background:var(--accent)}
+.song[aria-pressed="true"] .disc{animation:spin 2.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.song[aria-pressed="true"] .disc{animation:none}}
+.song .title{font-size:1.2rem;font-weight:600;line-height:1.25;margin-bottom:.15rem}
+.song .artist{color:var(--muted);margin-bottom:.9rem}
+.song dl{display:grid;grid-template-columns:auto 1fr;gap:.2rem .8rem;margin:0;font-size:.95rem}
+.song dt{color:var(--muted)} .song dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+fieldset{border:0;padding:0;margin:0 0 1.4rem}
+legend{font-weight:500;margin-bottom:.5rem;padding:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+label.opt{display:flex;align-items:center;gap:.45rem;border:1px solid var(--line);border-radius:10px;padding:.45rem .8rem;cursor:pointer;font-size:.95rem}
+label.opt input{accent-color:var(--accent)}
+.likert{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.likert label.opt{justify-content:center;flex-direction:column;gap:.15rem;padding:.4rem 0}
+.scale-ends{display:flex;justify-content:space-between;color:var(--muted);font-size:.82rem;margin-top:.3rem}
+.table-wrap{overflow-x:auto;margin:1rem 0}
+table{border-collapse:collapse;width:100%;font-size:.93rem;font-variant-numeric:tabular-nums}
+th,td{padding:.5rem .6rem;border-bottom:1px solid var(--line);text-align:left}
+th{font-weight:600}
+td.num,th.num{text-align:right}
+.bar{height:8px;border-radius:4px;background:var(--accent);display:inline-block;vertical-align:middle}
+textarea{width:100%;min-height:160px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:10px;padding:.7rem;background:var(--bg);color:var(--ink)}
+</style>
+</head>
+<body>
+<main><div class="sheet" id="app" aria-live="polite"></div>
+<p class="muted" style="text-align:center;margin:1rem auto 0">Version de démonstration. Aucune donnée n'est envoyée ni enregistrée.</p></main>
+
+<script>
+const NAMES = {
+  "Masculin clair": ["Thomas Girard"],
+  "Suggestion masculine": ["Granit"],
+  "Neutre": ["Prisme"],
+  "Suggestion féminine": ["Lilas"],
+  "Féminin clair": ["Juliette Roux"]
+};
+const CATS = Object.keys(NAMES);
+const TITLES = ["Nuits d'été","Le dernier train","Horizon","Café noir","Petit matin"];
+const STREAMS = [8400, 52000, 310000, 1400000, 6800000];
+const N_TASKS = 10;
+
+const state = { step:"consent", id:"P"+Math.random().toString(36).slice(2,8).toUpperCase(), gender:null, age:null, ident:[null,null,null,null], task:0, tasks:[], choice:null, rows:[] };
+const app = document.getElementById("app");
+const rand = a => a[Math.floor(Math.random()*a.length)];
+function normal(mu, sd){ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random(); return mu + sd*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function duration(){ return Math.round(Math.min(300, Math.max(90, normal(180, 30)))); }
+const fmtDur = s => Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+function fmtStreams(n){ if(n>=1e6) return (n/1e6).toLocaleString("fr-FR",{maximumFractionDigits:1})+" million"+(n>=2e6?"s":""); return n.toLocaleString("fr-FR"); }
+
+function profile(exclTitle){
+  const cat = rand(CATS);
+  let title; do { title = rand(TITLES); } while(title === exclTitle);
+  return { cat, name: rand(NAMES[cat]), title, dur: duration(), streams: rand(STREAMS) };
+}
+function makeTasks(){
+  const t=[]; for(let i=0;i<N_TASKS;i++){ const a=profile(); let b; do { b=profile(a.title); } while(b.name===a.name); t.push([a,b]); } return t;
+}
+
+function groupWords(){
+  if(state.gender==="Femme") return {me:"être une femme", others:"les autres femmes"};
+  if(state.gender==="Homme") return {me:"être un homme", others:"les autres hommes"};
+  return {me:"mon identité de genre", others:"les personnes qui partagent mon identité de genre"};
+}
+function items(){
+  const g=groupWords();
+  const binary=g.me.startsWith("être");
+  return [
+    binary?`Le fait d'${g.me} est une part importante de qui je suis.`:`Mon identité de genre est une part importante de qui je suis.`,
+    `Je me sens proche de ${g.others}.`,
+    binary?`Je pense souvent au fait d'${g.me}.`:`Je pense souvent à mon identité de genre.`,
+    binary?`Je suis content·e d'${g.me}.`:`Je suis content·e de mon identité de genre.`
+  ];
+}
+
+function render(){
+  const s=state.step;
+  if(s==="consent") return consent();
+  if(s==="demo") return demo();
+  if(s==="ident") return ident();
+  if(s==="intro") return intro();
+  if(s==="task") return task();
+  if(s==="end") return end();
+}
+
+function consent(){
+  app.innerHTML = `<h1>Choisir une nouvelle chanson</h1>
+  <p>Cette étude porte sur la façon dont on choisit la musique qu'on ne connaît pas encore. Elle dure environ 8 minutes.</p>
+  <p>Vous répondrez à quelques questions sur vous, puis vous choisirez 10 fois entre deux chansons. Il n'y a pas de bonne ou de mauvaise réponse. Vos réponses sont anonymes et vous pouvez arrêter à tout moment.</p>
+  <div class="row"><span class="muted">Identifiant : ${state.id}</span><button class="primary" id="go">J'accepte de participer</button></div>`;
+  document.getElementById("go").onclick=()=>{state.step="demo";render();};
+}
+
+function demo(){
+  const g=["Femme","Homme","Non-binaire","Autre / je préfère ne pas répondre"];
+  const a=["18 à 20 ans","21 à 24 ans","25 à 34 ans","35 ans et plus"];
+  app.innerHTML = `<h2>À propos de vous</h2>
+  <fieldset><legend>Quel est votre genre ?</legend><div class="opts">${g.map(x=>`<label class="opt"><input type="radio" name="g" value="${x}" ${state.gender===x?"checked":""}>${x}</label>`).join("")}</div></fieldset>
+  <fieldset><legend>Quel est votre âge ?</legend><div class="opts">${a.map(x=>`<label class="opt"><input type="radio" name="a" value="${x}" ${state.age===x?"checked":""}>${x}</label>`).join("")}</div></fieldset>
+  <div class="row"><span class="err" id="err"></span><button class="primary" id="next">Continuer</button></div>`;
+  app.querySelectorAll("input").forEach(i=>i.onchange=()=>{ if(i.name==="g")state.gender=i.value; else state.age=i.value; document.getElementById("err").textContent=""; });
+  document.getElementById("next").onclick=()=>{ if(!state.gender||!state.age){document.getElementById("err").textContent="Répondez aux deux questions pour continuer.";return;} state.step="ident";render(); };
+}
+
+function ident(){
+  const its=items();
+  app.innerHTML = `<h2>Vous et votre genre</h2><p class="muted">Indiquez à quel point vous êtes d'accord avec chaque phrase.</p>
+  ${its.map((t,k)=>`<fieldset><legend>${t}</legend><div class="likert">${[1,2,3,4,5,6,7].map(v=>`<label class="opt"><input type="radio" name="i${k}" value="${v}" ${state.ident[k]==v?"checked":""}>${v}</label>`).join("")}</div><div class="scale-ends"><span>Pas du tout d'accord</span><span>Tout à fait d'accord</span></div></fieldset>`).join("")}
+  <div class="row"><span class="err" id="err"></span><button class="primary" id="next">Continuer</button></div>`;
+  app.querySelectorAll("input").forEach(i=>i.onchange=()=>{ state.ident[+i.name.slice(1)]=+i.value; document.getElementById("err").textContent=""; });
+  document.getElementById("next").onclick=()=>{ if(state.ident.some(v=>v===null)){document.getElementById("err").textContent="Répondez aux quatre phrases pour continuer.";return;} state.step="intro";render(); };
+}
+
+function intro(){
+  app.innerHTML = `<h2>Les choix</h2>
+  <p>Vous allez voir 10 paires de chansons récentes. Pour chaque paire, choisissez celle que vous préféreriez écouter en premier.</p>
+  <p class="muted">Faites confiance à votre première impression.</p>
+  <div class="row"><span></span><button class="primary" id="go">Commencer</button></div>`;
+  document.getElementById("go").onclick=()=>{ state.tasks=makeTasks(); state.task=0; state.choice=null; state.step="task"; render(); };
+}
+
+function card(p,k){
+  return `<button class="song" data-k="${k}" aria-pressed="${state.choice===k}">
+    <div class="disc" aria-hidden="true"></div>
+    <div class="title">${p.title}</div><div class="artist">${p.name}</div>
+    <dl><dt>Durée</dt><dd>${fmtDur(p.dur)}</dd><dt>Écoutes Spotify</dt><dd>${fmtStreams(p.streams)}</dd></dl>
+  </button>`;
+}
+function task(){
+  const [a,b]=state.tasks[state.task];
+  app.innerHTML = `<div class="meta"><span>Choix ${state.task+1} sur ${N_TASKS}</span></div>
+  <div class="progress" aria-hidden="true">${Array.from({length:N_TASKS},(_,i)=>`<span class="${i<state.task?"done":""}"></span>`).join("")}</div>
+  <p>Laquelle de ces deux chansons préféreriez-vous écouter ?</p>
+  <div class="pair">${card(a,0)}${card(b,1)}</div>
+  <div class="row"><span class="err" id="err"></span><button class="primary" id="next">${state.task===N_TASKS-1?"Terminer":"Suivant"}</button></div>`;
+  app.querySelectorAll(".song").forEach(el=>el.onclick=()=>{ state.choice=+el.dataset.k; app.querySelectorAll(".song").forEach(x=>x.setAttribute("aria-pressed", String(+x.dataset.k===state.choice))); document.getElementById("err").textContent=""; });
+  document.getElementById("next").onclick=()=>{
+    if(state.choice===null){document.getElementById("err").textContent="Choisissez une chanson pour continuer.";return;}
+    const identScore=(state.ident.reduce((x,y)=>x+y,0)/4).toFixed(2);
+    [a,b].forEach((p,k)=>state.rows.push({id:state.id,genre:state.gender,age:state.age,ident:identScore,tache:state.task+1,profil:k===0?"A":"B",nom:p.name,categorie_nom:p.cat,titre:p.title,duree_sec:p.dur,ecoutes:p.streams,choisi:k===state.choice?1:0}));
+    state.choice=null; state.task++;
+    if(state.task>=N_TASKS){state.step="end";} render(); window.scrollTo(0,0);
+  };
+}
+
+function end(){
+  const byCat=CATS.map(c=>{ const r=state.rows.filter(x=>x.categorie_nom===c); const ch=r.filter(x=>x.choisi).length; return {c,name:NAMES[c][0],n:r.length,ch,rate:r.length?ch/r.length:null}; });
+  const identScore=(state.ident.reduce((x,y)=>x+y,0)/4);
+  const pairs=[]; for(let t=1;t<=N_TASKS;t++){ const r=state.rows.filter(x=>x.tache===t); pairs.push({win:r.find(x=>x.choisi),lose:r.find(x=>!x.choisi)}); }
+  const rateOf=cats=>{ const r=state.rows.filter(x=>cats.includes(x.categorie_nom)); return r.length?r.filter(x=>x.choisi).length/r.length:null; };
+  const fem=rateOf(["Suggestion féminine","Féminin clair"]), masc=rateOf(["Masculin clair","Suggestion masculine"]);
+  let pattern="";
+  if(fem!==null&&masc!==null){
+    const d=Math.round((fem-masc)*100);
+    if(Math.abs(d)<15) pattern="Dans vos choix, les noms à connotation féminine et masculine ont été choisis à peu près aussi souvent.";
+    else pattern=`Dans vos choix, les noms à connotation ${d>0?"féminine":"masculine"} ont été choisis plus souvent (${Math.round(Math.max(fem,masc)*100)} % contre ${Math.round(Math.min(fem,masc)*100)} %).`;
+  }
+  const level=identScore>=5?"plutôt élevé":identScore<=3?"plutôt faible":"intermédiaire";
+  app.innerHTML = `<h1>Merci pour votre participation</h1>
+  <h2 style="margin-top:1.5rem">Ce que l'étude cherchait vraiment</h2>
+  <p>Nous vous avons présenté l'étude comme portant sur le choix de nouvelles musiques en général. En réalité, une seule information nous intéressait : le nom de l'artiste.</p>
+  <p>Ce nom pouvait prendre cinq formes, d'un nom clairement masculin à un nom clairement féminin, en passant par des noms de scène qui suggèrent un genre sans le dire et un nom de scène neutre. Le titre, la durée et le nombre d'écoutes étaient tirés au hasard pour rendre les choix réalistes et éviter que la question soit évidente.</p>
+  <p>Nous voulons savoir si les personnes qui accordent beaucoup d'importance à leur genre choisissent plus souvent des artistes qui semblent partager ce genre. C'est pour cela que nous vous avons posé des questions sur votre identité de genre avant les choix.</p>
+
+  <h2 style="margin-top:1.75rem">Vos choix</h2>
+  <p>Votre score d'identification de genre est de ${identScore.toFixed(1)} sur 7, un niveau ${level}. ${pattern}</p>
+  <div class="table-wrap"><table><thead><tr><th>Nom de l'artiste</th><th>Type de nom</th><th class="num">Choisi</th><th style="width:32%">Taux de choix</th></tr></thead><tbody>
+  ${byCat.map(x=>`<tr><td>${x.name}</td><td>${x.c}</td><td class="num">${x.n?`${x.ch} sur ${x.n}`:"–"}</td><td>${x.rate===null?'<span class="muted">jamais affiché</span>':`<span class="bar" style="width:${Math.max(2,Math.round(x.rate*100))}%"></span> ${Math.round(x.rate*100)} %`}</td></tr>`).join("")}
+  </tbody></table></div>
+  <details style="margin-bottom:1rem"><summary style="cursor:pointer;font-weight:500">Voir vos 10 choix un par un</summary>
+  <div class="table-wrap"><table><thead><tr><th class="num">N°</th><th>Chanson choisie</th><th>Chanson écartée</th></tr></thead><tbody>
+  ${pairs.map((p,i)=>`<tr><td class="num">${i+1}</td><td>${p.win.titre}, ${p.win.nom}</td><td class="muted">${p.lose.titre}, ${p.lose.nom}</td></tr>`).join("")}
+  </tbody></table></div></details>
+  <p class="muted">Avec seulement 10 choix, vos résultats individuels dépendent beaucoup du hasard des paires affichées et ne disent rien de définitif sur vous. Ce sont les réponses de l'ensemble des participant·es qui permettent de tirer des conclusions.</p>
+
+  <h2 style="margin-top:1.75rem">Et maintenant ?</h2>
+  <p>Nous ne vous avons pas révélé le vrai objectif au départ, car le savoir aurait pu influencer vos choix. Si vous préférez que vos réponses ne soient pas utilisées, vous pouvez les retirer en nous écrivant avec votre identifiant, ${state.id}. Merci de ne pas parler du vrai objectif de l'étude à d'autres personnes qui pourraient y participer.</p>
+  <div class="row"><span></span><button class="primary" id="again">Refaire l'expérience</button></div>`;
+  document.getElementById("again").onclick=()=>{ Object.assign(state,{step:"consent",id:"P"+Math.random().toString(36).slice(2,8).toUpperCase(),gender:null,age:null,ident:[null,null,null,null],task:0,tasks:[],choice:null,rows:[]}); render(); window.scrollTo(0,0); };
+}
+render();
+</script>
+</body>
+</html>
